@@ -1,60 +1,29 @@
 import java.util.*;
 
-class Reservation {
-    String id;
-    String roomType;
-    boolean active;
+class BookingProcessor {
+    private int availableRooms = 1;
 
-    Reservation(String id, String roomType) {
-        this.id = id;
-        this.roomType = roomType;
-        this.active = true;
-    }
-}
-
-class CancellationService {
-    Stack<String> releasedRooms = new Stack<>();
-
-    void cancel(String id,
-                Map<String, Reservation> bookings,
-                Map<String, Integer> inventory) {
-
-        if (!bookings.containsKey(id)) {
-            System.out.println("Cancellation Failed: Booking not found");
-            return;
+    public synchronized void bookRoom(String guest) {
+        if (availableRooms > 0) {
+            System.out.println(guest + " is booking...");
+            availableRooms--;
+            System.out.println(guest + " booked successfully");
+        } else {
+            System.out.println(guest + " failed - No rooms available");
         }
-
-        Reservation r = bookings.get(id);
-
-        if (!r.active) {
-            System.out.println("Cancellation Failed: Already cancelled");
-            return;
-        }
-
-        releasedRooms.push(id);
-
-        inventory.put(r.roomType, inventory.get(r.roomType) + 1);
-
-        r.active = false;
-
-        System.out.println("Booking Cancelled: " + id);
     }
 }
 
 public class BookMyStayApp {
     public static void main(String[] args) {
-        Map<String, Integer> inventory = new HashMap<>();
-        inventory.put("Single", 1);
+        BookingProcessor processor = new BookingProcessor();
 
-        Map<String, Reservation> bookings = new HashMap<>();
-        bookings.put("RES1", new Reservation("RES1", "Single"));
+        Thread t1 = new Thread(() -> processor.bookRoom("Guest 1"));
+        Thread t2 = new Thread(() -> processor.bookRoom("Guest 2"));
+        Thread t3 = new Thread(() -> processor.bookRoom("Guest 3"));
 
-        CancellationService service = new CancellationService();
-
-        service.cancel("RES1", bookings, inventory);
-        service.cancel("RES1", bookings, inventory);
-        service.cancel("RES2", bookings, inventory);
-
-        System.out.println("Available Single Rooms: " + inventory.get("Single"));
+        t1.start();
+        t2.start();
+        t3.start();
     }
 }

@@ -1,47 +1,60 @@
 import java.util.*;
 
-class InvalidBookingException extends Exception {
-    InvalidBookingException(String message) {
-        super(message);
+class Reservation {
+    String id;
+    String roomType;
+    boolean active;
+
+    Reservation(String id, String roomType) {
+        this.id = id;
+        this.roomType = roomType;
+        this.active = true;
     }
 }
 
-class BookingValidator {
-    static void validate(String roomType, int rooms, Map<String, Integer> inventory) throws InvalidBookingException {
-        if (!inventory.containsKey(roomType)) {
-            throw new InvalidBookingException("Invalid room type");
+class CancellationService {
+    Stack<String> releasedRooms = new Stack<>();
+
+    void cancel(String id,
+                Map<String, Reservation> bookings,
+                Map<String, Integer> inventory) {
+
+        if (!bookings.containsKey(id)) {
+            System.out.println("Cancellation Failed: Booking not found");
+            return;
         }
 
-        if (rooms <= 0) {
-            throw new InvalidBookingException("Rooms must be greater than 0");
+        Reservation r = bookings.get(id);
+
+        if (!r.active) {
+            System.out.println("Cancellation Failed: Already cancelled");
+            return;
         }
 
-        if (inventory.get(roomType) < rooms) {
-            throw new InvalidBookingException("Not enough rooms available");
-        }
+        releasedRooms.push(id);
+
+        inventory.put(r.roomType, inventory.get(r.roomType) + 1);
+
+        r.active = false;
+
+        System.out.println("Booking Cancelled: " + id);
     }
 }
 
 public class BookMyStayApp {
     public static void main(String[] args) {
         Map<String, Integer> inventory = new HashMap<>();
-        inventory.put("Single", 2);
-        inventory.put("Double", 1);
+        inventory.put("Single", 1);
 
-        try {
-            String roomType = "Single";
-            int roomsRequested = 3;
+        Map<String, Reservation> bookings = new HashMap<>();
+        bookings.put("RES1", new Reservation("RES1", "Single"));
 
-            BookingValidator.validate(roomType, roomsRequested, inventory);
+        CancellationService service = new CancellationService();
 
-            inventory.put(roomType, inventory.get(roomType) - roomsRequested);
+        service.cancel("RES1", bookings, inventory);
+        service.cancel("RES1", bookings, inventory);
+        service.cancel("RES2", bookings, inventory);
 
-            System.out.println("Booking Successful");
-
-        } catch (InvalidBookingException e) {
-            System.out.println("Booking Failed: " + e.getMessage());
-        }
-
-        System.out.println("System is still running safely...");
+        System.out.println("Available Single Rooms: " + inventory.get("Single"));
     }
 }

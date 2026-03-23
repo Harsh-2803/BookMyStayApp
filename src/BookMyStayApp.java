@@ -1,33 +1,49 @@
 import java.util.*;
 
-class AddOnService {
-    String name;
-    double cost;
+class Reservation {
+    String id;
+    String guestName;
 
-    AddOnService(String name, double cost) {
-        this.name = name;
-        this.cost = cost;
+    Reservation(String id, String guestName) {
+        this.id = id;
+        this.guestName = guestName;
+    }
+}
+
+class BookingHistory {
+    List<Reservation> history = new ArrayList<>();
+
+    void addReservation(Reservation r) {
+        history.add(r);
+    }
+
+    List<Reservation> getAllReservations() {
+        return history;
+    }
+}
+
+class BookingReportService {
+    void showAllBookings(List<Reservation> list) {
+        for (Reservation r : list) {
+            System.out.println(r.id + " - " + r.guestName);
+        }
+    }
+
+    void totalBookings(List<Reservation> list) {
+        System.out.println("Total Bookings: " + list.size());
     }
 }
 
 public class BookMyStayApp {
     public static void main(String[] args) {
-        Map<String, List<AddOnService>> map = new HashMap<>();
+        BookingHistory history = new BookingHistory();
+        BookingReportService report = new BookingReportService();
 
-        String id = "RES1";
+        history.addReservation(new Reservation("RES1", "Harsha"));
+        history.addReservation(new Reservation("RES2", "Arun"));
+        history.addReservation(new Reservation("RES3", "Priya"));
 
-        map.putIfAbsent(id, new ArrayList<>());
-
-        map.get(id).add(new AddOnService("WiFi", 500));
-        map.get(id).add(new AddOnService("Breakfast", 800));
-
-        double total = 0;
-
-        for (AddOnService s : map.get(id)) {
-            System.out.println(s.name + " - ₹" + s.cost);
-            total += s.cost;
-        }
-
-        System.out.println("Total: ₹" + total);
+        report.showAllBookings(history.getAllReservations());
+        report.totalBookings(history.getAllReservations());
     }
 }

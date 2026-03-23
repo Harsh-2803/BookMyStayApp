@@ -1,29 +1,62 @@
+import java.io.*;
 import java.util.*;
 
-class BookingProcessor {
-    private int availableRooms = 1;
+class Reservation implements Serializable {
+    String id;
+    String guest;
 
-    public synchronized void bookRoom(String guest) {
-        if (availableRooms > 0) {
-            System.out.println(guest + " is booking...");
-            availableRooms--;
-            System.out.println(guest + " booked successfully");
-        } else {
-            System.out.println(guest + " failed - No rooms available");
+    Reservation(String id, String guest) {
+        this.id = id;
+        this.guest = guest;
+    }
+}
+
+class DataStore implements Serializable {
+    List<Reservation> bookings;
+    Map<String, Integer> inventory;
+
+    DataStore(List<Reservation> bookings, Map<String, Integer> inventory) {
+        this.bookings = bookings;
+        this.inventory = inventory;
+    }
+}
+
+class PersistenceService {
+    static void save(DataStore data) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("data.txt"))) {
+            oos.writeObject(data);
+        } catch (Exception e) {
+            System.out.println("Save failed");
+        }
+    }
+
+    static DataStore load() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("data.txt"))) {
+            return (DataStore) ois.readObject();
+        } catch (Exception e) {
+            System.out.println("No previous data, starting fresh");
+            return new DataStore(new ArrayList<>(), new HashMap<>());
         }
     }
 }
 
 public class BookMyStayApp {
     public static void main(String[] args) {
-        BookingProcessor processor = new BookingProcessor();
+        DataStore data = PersistenceService.load();
 
-        Thread t1 = new Thread(() -> processor.bookRoom("Guest 1"));
-        Thread t2 = new Thread(() -> processor.bookRoom("Guest 2"));
-        Thread t3 = new Thread(() -> processor.bookRoom("Guest 3"));
+        data.inventory.putIfAbsent("Single", 2);
 
-        t1.start();
-        t2.start();
-        t3.start();
+        data.bookings.add(new Reservation("RES1", "Harsha"));
+
+        data.inventory.put("Single", data.inventory.get("Single") - 1);
+
+        System.out.println("Bookings:");
+        for (Reservation r : data.bookings) {
+            System.out.println(r.id + " - " + r.guest);
+        }
+
+        System.out.println("Available Rooms: " + data.inventory.get("Single"));
+
+        PersistenceService.save(data);
     }
 }
